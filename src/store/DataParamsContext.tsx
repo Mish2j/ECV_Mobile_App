@@ -1,6 +1,14 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+} from "react";
 import { DataParams, TimeSeriesMetadata } from "../types/time-series.types";
 import { DefaultParams } from "../constants/time-series";
+import { getDefaultDateRange } from "../components/Plot/helpers";
+import { isValidUTC } from "../utils/date";
 
 interface DataParamsContextType {
   params: DataParams;
@@ -52,14 +60,32 @@ export const DataParamsProvider: React.FC<{ children: ReactNode }> = ({
   const [staged, setStaged] = useState<Partial<DataParams>>({});
   const [metadata, setMetadata] = useState<Partial<TimeSeriesMetadata>>({});
 
+  const checkValidity = (param: Partial<DataParams>, what: string) => {
+    if (param.begin_time && !isValidUTC(param.begin_time)) {
+      console.error(`${what} has invalid date: ${param.begin_time}`);
+    }
+
+    if (param.end_time && !isValidUTC(param.end_time)) {
+      console.error(`${what} has invalid date: ${param.end_time}`);
+    }
+  };
+
+  useEffect(() => {
+    checkValidity(params, "params");
+    checkValidity(staged, "staged");
+  }, [params, staged]);
+
   // immediate update
   const updateParams = (newParams: Partial<DataParams>) => {
+    checkValidity(newParams, "params");
     setParams((prev) => ({ ...prev, ...newParams }));
     setStaged({});
   };
+  // console.log("state: ", params);
 
   // request confirmation before updating
   const requestUpdateParams = (newParams: Partial<DataParams>) => {
+    checkValidity(newParams, "staged");
     setStaged((prev) => ({ ...prev, ...newParams }));
   };
 

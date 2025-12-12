@@ -4,7 +4,7 @@ import { IonDatetime, DatetimeChangeEventDetail } from "@ionic/react";
 
 import catalog from "../Catalog/catalog.json";
 import { useDataParams } from "../../store/DataParamsContext";
-import { toStartOfDay } from "../../utils/date";
+import { getUTCStartOfDay } from "../../utils/date";
 
 import Banner from "../UI/Banner";
 
@@ -32,13 +32,15 @@ const Date = () => {
   const beginDateUpdateHandler = (
     event: CustomEvent<DatetimeChangeEventDetail>
   ) => {
-    requestUpdateParams({ begin_time: event.detail.value as string });
+    const normalized = getUTCStartOfDay(event.detail.value as string);
+    requestUpdateParams({ begin_time: normalized });
   };
 
   const endDateUpdateHandler = (
     event: CustomEvent<DatetimeChangeEventDetail>
   ) => {
-    requestUpdateParams({ end_time: event.detail.value as string });
+    const normalized = getUTCStartOfDay(event.detail.value as string);
+    requestUpdateParams({ end_time: normalized });
   };
 
   return (
@@ -50,12 +52,10 @@ const Date = () => {
             <IonCol size="12" size-sm="6">
               <IonDatetime
                 presentation="date"
-                value={toStartOfDay(
-                  stagedParams.begin_time || ctxParams.begin_time
-                )}
+                value={stagedParams.begin_time || ctxParams.begin_time}
                 onIonChange={beginDateUpdateHandler}
                 min={currentVariableData?.dataProductBeginDateTime}
-                max={toStartOfDay(stagedParams.end_time || ctxParams.end_time)}
+                max={stagedParams.end_time || ctxParams.end_time}
                 style={{ width: "100%" }}
               >
                 <span slot="title">Select Start Date</span>
@@ -64,13 +64,9 @@ const Date = () => {
             <IonCol size="12" size-sm="6">
               <IonDatetime
                 presentation="date"
-                value={toStartOfDay(
-                  stagedParams.end_time || ctxParams.end_time
-                )}
+                value={stagedParams.end_time || ctxParams.end_time}
                 onIonChange={endDateUpdateHandler}
-                min={toStartOfDay(
-                  stagedParams.begin_time || ctxParams.begin_time
-                )}
+                min={stagedParams.begin_time || ctxParams.begin_time}
                 style={{ width: "100%" }}
               >
                 <span slot="title">Select End Date</span>

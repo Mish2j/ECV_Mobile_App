@@ -16,8 +16,12 @@ import { isEmpty } from "lodash";
 import { TimeSeriesDataRow, DataParams } from "../../types/time-series.types";
 import { useDataParams } from "../../store/DataParamsContext";
 import { DefaultParams, TimeIntervalKey } from "../../constants/time-series";
-import { toLocalShortDateTime } from "../../utils/date";
-import { getMiddleIndex, convertTimeInterval } from "./helpers";
+import { getUTCStartOfDay, formatUtcDate } from "../../utils/date";
+import {
+  getMiddleIndex,
+  convertTimeInterval,
+  getDefaultDateRange,
+} from "./helpers";
 import catalog from "./../Catalog/catalog.json";
 import TerraTimeSeries, {
   TerraTimeSeriesDataChangeEvent,
@@ -72,15 +76,55 @@ const Plot: React.FC = () => {
    */
   useEffect(() => {
     if (!catalogPageVariable) return;
-
+    // console.log("run useeffect with: ", catalogPageVariable);
+    // FIXME: returns today's date
+    // const { startDate: defaultStartDate, endDate: defaultEndDate } =
+    //   getDefaultDateRange(
+    //     dayjs(productDetailsFromCatalog?.dataProductBeginDateTime),
+    //     dayjs(productDetailsFromCatalog?.dataProductEndDateTime),
+    //     productDetailsFromCatalog?.dataProductTimeInterval as TimeIntervalKey
+    //   );
+    // console.log("SENDING REQUEST: ", defaultStartDate, defaultEndDate);
+    // TODO: Should use device's location if provided
     updateParams({
       lat: DefaultParams.LATITUDE,
       lon: DefaultParams.LONGITUDE,
+      // begin_time: defaultStartDate,
+      // end_time: defaultEndDate,
       begin_time: DefaultParams.BEGIN_TIME,
       end_time: DefaultParams.END_TIME,
       variable: catalogPageVariable as string,
     });
   }, [catalogPageVariable]);
+
+  // console.log(
+  //   "getDefaultDateRange",
+  //   getDefaultDateRange(
+  //     dayjs(productDetailsFromCatalog?.dataProductBeginDateTime),
+  //     dayjs(productDetailsFromCatalog?.dataProductEndDateTime),
+  //     "half-hourly"
+  //   )
+  // );
+
+  // console.log(
+  //   "getDefaultDateRange",
+  //   getDefaultDateRange(
+  //     dayjs(productDetailsFromCatalog?.dataProductBeginDateTime),
+  //     dayjs(productDetailsFromCatalog?.dataProductEndDateTime),
+  //     "monthly"
+  //   )
+  // );
+
+  // console.log(
+  //   "getDefaultDateRange",
+  //   getDefaultDateRange(
+  //     dayjs(productDetailsFromCatalog?.dataProductBeginDateTime),
+  //     dayjs(productDetailsFromCatalog?.dataProductEndDateTime),
+  //     "weekly"
+  //   )
+  // );
+  // console.log(`_______________________________`);
+  // console.log(productDetailsFromCatalog?.dataProductBeginDateTime);
 
   const sliderValueChangeHandler = (e: RangeCustomEvent) => {
     if (!stateData.length) return;
@@ -122,6 +166,8 @@ const Plot: React.FC = () => {
   };
 
   const plotCachedItemHandler = (newParams: DataParams) => {
+    console.log(newParams.end_time);
+    console.log("formatted", getUTCStartOfDay(newParams.end_time));
     updateParams({
       lat: newParams.lat,
       lon: newParams.lon,
@@ -133,15 +179,22 @@ const Plot: React.FC = () => {
 
   // Emitted whenever time series data has been fetched from Giovanni. Or zoomed in/out.
   const timeSeriesDataChangeHandler = (e: TerraTimeSeriesDataChangeEvent) => {
-    /* FIXME: plot data disappears when fully zoomed in and then zoomed out -- setStateData causes the bug */
     setStateData(e.detail.data.data);
+    console.log("e", e);
     setMetadata(e.detail.data.metadata);
   };
 
   // Emitted whenever the date range is modified
   // const timeSeriesDateRangeChangeHandler = (e: CustomEvent) => {
   // };
+  // console.log("as it is: ", ctxParams.begin_time);
+  // console.log(formatToDate(ctxParams.begin_time));
+  // console.log(
+  //   ctxParams.begin_time.replace(/(\d{4})-(\d{2})-(\d{2}).*/, "$2/$3/$1")
+  // );
+  console.log("For Time Series component", formatUtcDate(ctxParams.end_time));
 
+  // TODO: check date picker value when plotting data from history
   return (
     <IonPage>
       <IonContent fullscreen={true}>
@@ -176,23 +229,29 @@ const Plot: React.FC = () => {
                 ></TerraTimeAverageMap>
               </IonCol> */}
               <IonCol size="12">
+                {/* The start date for the time series plot. (ex: 2021-01-01) */}
+
                 <TerraTimeSeries
                   // onTerraDateRangeChange={timeSeriesDateRangeChangeHandler}
                   onTerraTimeSeriesDataChange={timeSeriesDataChangeHandler}
                   variableEntryId={ctxParams.variable}
-                  start-date={ctxParams.begin_time.replace(
-                    /(\d{4})-(\d{2})-(\d{2}).*/,
-                    "$2/$3/$1"
-                  )}
-                  end-date={ctxParams.end_time.replace(
-                    /(\d{4})-(\d{2})-(\d{2}).*/,
-                    "$2/$3/$1"
-                  )}
+                  // start-date={ctxParams.begin_time.replace(
+                  //   /(\d{4})-(\d{2})-(\d{2}).*/,
+                  //   "$2/$3/$1"
+                  // )}
+                  // end-date={ctxParams.end_time.replace(
+                  //   /(\d{4})-(\d{2})-(\d{2}).*/,
+                  //   "$2/$3/$1"
+                  // )}
+                  start-date={formatUtcDate(ctxParams.begin_time)}
+                  end-date={formatUtcDate(ctxParams.end_time)}
+                  // start-date={formatToDate(ctxParams.begin_time)}
+                  // end-date={formatToDate(ctxParams.end_time)}
                   location={`${ctxParams.lat},${ctxParams.lon}`}
                 ></TerraTimeSeries>
               </IonCol>
               <IonCol size="12">
-                {!isEmpty(metadata) && stateData.length !== 0 && (
+                {
                   <Slider
                     onLeftBtnClick={sliderLeftBtnHandler}
                     onRightBtnClick={sliderRightBtnHandler}
@@ -202,18 +261,14 @@ const Plot: React.FC = () => {
                     onValueChange={sliderValueChangeHandler}
                     pinFormatter={(index: number) =>
                       stateData[index]?.timestamp
-                        ? `${toLocalShortDateTime(
-                            stateData[index].timestamp
-                          )}, ${stateData[index].value}`
+                        ? `${stateData[index].timestamp}, ${stateData[index].value}`
                         : ""
                     }
-                    disabled={!stateData.length}
-                    startDate={toLocalShortDateTime(stateData[0]?.timestamp)}
-                    endDate={toLocalShortDateTime(
-                      stateData[stateData.length - 1]?.timestamp
-                    )}
+                    disabled={isEmpty(metadata) && stateData.length === 0}
+                    startDate={stateData[0]?.timestamp}
+                    endDate={stateData[stateData.length - 1]?.timestamp}
                   />
-                )}
+                }
               </IonCol>
               {!isEmpty(metadata) && stateData.length !== 0 && (
                 <TimeInterval

@@ -4,7 +4,11 @@ import { trash } from "ionicons/icons";
 
 import { DataParams, VariableDbEntry } from "../../../types/time-series.types";
 import { extractLatLonFromCacheKey } from "../helpers";
-import { toLocalShortDateTime } from "../../../utils/date";
+// import {
+//   toLocalShortDateTime,
+//   formatToDate,
+//   getUTCStartOfDay,
+// } from "../../../utils/date";
 import catalog from "../../Catalog/catalog.json";
 
 import styles from "./StorageItem.module.css";
@@ -29,13 +33,22 @@ const StorageItem: React.FC<StorageItemProps> = ({
 
     const coords = extractLatLonFromCacheKey(item.key);
 
-    if (!coords || !item.metadata || !item.variableEntryId) return;
+    if (
+      coords === null ||
+      !item.metadata ||
+      !item.variableEntryId ||
+      !item.startDate ||
+      !item.endDate
+    )
+      return;
 
     const cachedDataParams = {
       lat: coords.lat,
       lon: coords.lon,
-      begin_time: item.metadata.begin_time,
-      end_time: item.metadata.end_time,
+      // begin_time: getUTCStartOfDay(item.metadata.begin_time),
+      // end_time: getUTCStartOfDay(item.metadata.end_time),
+      begin_time: item.startDate,
+      end_time: item.endDate,
       variable: item.variableEntryId,
     };
 
@@ -50,13 +63,13 @@ const StorageItem: React.FC<StorageItemProps> = ({
             {itemMetadataFromCatalog?.label}
           </h2>
           {item.metadata?.Request_time && (
-            <p>Timestamp: {toLocalShortDateTime(item.metadata.Request_time)}</p>
+            <p>Timestamp: {item.metadata.Request_time}</p>
           )}
           {item.metadata?.begin_time && (
-            <p>Begin Time: {toLocalShortDateTime(item.metadata.begin_time)}</p>
+            <p>Begin Time: {item.startDate && item.startDate}</p>
           )}
           {item.metadata?.end_time && (
-            <p>End Time: {toLocalShortDateTime(item.metadata.end_time)}</p>
+            <p>End Time: {item.endDate && item.endDate}</p>
           )}
           <p>Latitude: {item.metadata?.lat}</p>
           <p>Longitude: {item.metadata?.lon}</p>

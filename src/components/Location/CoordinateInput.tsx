@@ -30,7 +30,7 @@ const CoordinateInput: React.FC<CoordinateInputProps> = ({
             <IonLabel position="floating">Latitude:</IonLabel>
             <IonInput
               type="number"
-              value={latitude.toString()}
+              value={latitude}
               onIonChange={onLatChange}
             />
           </IonItem>
@@ -38,7 +38,7 @@ const CoordinateInput: React.FC<CoordinateInputProps> = ({
             <IonLabel position="floating">Longitude:</IonLabel>
             <IonInput
               type="number"
-              value={longitude.toString()}
+              value={longitude}
               onIonChange={onLngChange}
             />
           </IonItem>

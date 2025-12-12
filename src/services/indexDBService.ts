@@ -69,8 +69,9 @@ export async function getAllData(
 ): Promise<Partial<VariableDbEntry>[]> {
   return withDb(async (db) => {
     const items = await db.getAll(store);
-
     return items.map((item) => ({
+      startDate: item.startDate,
+      endDate: item.endDate,
       metadata: item.metadata,
       variableEntryId: item.variableEntryId,
       key: item.key,

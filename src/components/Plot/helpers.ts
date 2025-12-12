@@ -1,4 +1,8 @@
+import dayjs, { Dayjs } from "dayjs";
 import { TimeIntervals, TimeIntervalKey } from "../../constants/time-series";
+import minMax from "dayjs/plugin/minMax";
+import { getUTCStartOfDay } from "../../utils/date";
+dayjs.extend(minMax);
 
 /**
  *
@@ -79,4 +83,51 @@ export const convertTimeInterval = (
   const toHours = TimeIntervals[to];
 
   return toHours / fromHours;
+};
+
+/**
+ *
+ * Given time interval, product end date and start date. Return default date range in
+ * "YYYY-MM-DD" format.
+ *
+ * TODO: Date range should end with the most recently available data. Since we don't
+ * have the most recently available "dataProductEndDateTime", we will use dayjs() to
+ * get the current date and time for now.
+ *
+ */
+export const getDefaultDateRange = (
+  minAvailableDate = dayjs(),
+  maxAvailableDate = dayjs(),
+  timeInterval: TimeIntervalKey
+) => {
+  let months = 1; // will go back a month
+  console.log("inside getDefaultDateRange ");
+  console.log(minAvailableDate);
+  console.log(maxAvailableDate);
+  switch (timeInterval) {
+    // case "half-hourly":
+    // case "hourly":
+    // case "3-hourly":
+    case "daily":
+      months = 2;
+      break;
+    case "weekly":
+      months = 12;
+      break;
+    case "monthly":
+      months = 60;
+      break;
+    default:
+      months = 1;
+  }
+
+  const start = dayjs.max(
+    minAvailableDate,
+    maxAvailableDate.subtract(months, "month")
+  );
+
+  return {
+    startDate: getUTCStartOfDay(start),
+    endDate: getUTCStartOfDay(dayjs(maxAvailableDate)),
+  };
 };

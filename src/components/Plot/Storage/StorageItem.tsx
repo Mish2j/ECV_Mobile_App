@@ -12,13 +12,13 @@ import styles from "./StorageItem.module.css";
 interface StorageItemProps {
   item: Partial<VariableDbEntry>;
   onDelete: (key: string) => void;
-  onPlot: ({ lat, lon, begin_time, end_time, variable }: DataParams) => void;
+  // onPlot: ({ lat, lon, begin_time, end_time, variable }: DataParams) => void;
 }
 
 const StorageItem: React.FC<StorageItemProps> = ({
   item,
   onDelete,
-  onPlot,
+  // onPlot,
 }) => {
   const itemMetadataFromCatalog = catalog.find(
     (data) => data.dataFieldId === item.variableEntryId
@@ -39,7 +39,7 @@ const StorageItem: React.FC<StorageItemProps> = ({
       variable: item.variableEntryId,
     };
 
-    onPlot(cachedDataParams);
+    // onPlot(cachedDataParams);
   };
 
   return (

@@ -9,16 +9,17 @@ const LocationMarker: React.FC = () => {
 
   useMapEvents({
     click(e) {
-      requestUpdateParams({
-        lat: convertToFixedFloat(e.latlng.lat, 4),
-        lon: convertToFixedFloat(e.latlng.lng, 4),
-      });
+      // requestUpdateParams({
+      //   lat: convertToFixedFloat(e.latlng.lat, 4),
+      //   lon: convertToFixedFloat(e.latlng.lng, 4),
+      // });
     },
   });
 
   return (
     <Marker
-      position={[staged.lat || ctxParams.lat, staged.lon || ctxParams.lon]}
+      position={[12, 12]} // temp. coordinates to avoid errors
+      // position={[staged.lat || ctxParams.lat, staged.lon || ctxParams.lon]}
     ></Marker>
   );
 };

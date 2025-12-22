@@ -6,7 +6,11 @@ import React, {
   useEffect,
 } from "react";
 
-import { DataParams, TimeSeriesMetadata } from "../types/time-series.types";
+import {
+  DataParams,
+  SpatialAreaType,
+  TimeSeriesMetadata,
+} from "../types/time-series.types";
 import { DefaultParams } from "../constants/time-series";
 import { convertToFixedFloat } from "../utils/converter";
 import { isValidUTC } from "../utils/date";
@@ -27,8 +31,15 @@ const initialContextValue: DataParamsContextType = {
     variable: "",
     begin_time: DefaultParams.BEGIN_TIME,
     end_time: DefaultParams.END_TIME,
-    lat: DefaultParams.LATITUDE,
-    lon: DefaultParams.LONGITUDE,
+    spatialArea: {
+      type: SpatialAreaType.COORDINATES,
+      value: {
+        lat: DefaultParams.LATITUDE.toString(),
+        lng: DefaultParams.LONGITUDE.toString(),
+      },
+    },
+    // lat: DefaultParams.LATITUDE,
+    // lon: DefaultParams.LONGITUDE,
   },
   staged: {},
   metadata: {},
@@ -62,8 +73,15 @@ export const DataParamsProvider: React.FC<{ children: ReactNode }> = ({
     variable: "",
     begin_time: DefaultParams.BEGIN_TIME,
     end_time: DefaultParams.END_TIME,
-    lat: DefaultParams.LATITUDE,
-    lon: DefaultParams.LONGITUDE,
+    spatialArea: {
+      type: SpatialAreaType.COORDINATES,
+      value: {
+        lat: DefaultParams.LATITUDE.toString(),
+        lng: DefaultParams.LONGITUDE.toString(),
+      },
+    },
+    // lat: DefaultParams.LATITUDE,
+    // lon: DefaultParams.LONGITUDE,
   });
   const [staged, setStaged] = useState<Partial<DataParams>>({});
   const [metadata, setMetadata] = useState<Partial<TimeSeriesMetadata>>({});
@@ -79,8 +97,13 @@ export const DataParamsProvider: React.FC<{ children: ReactNode }> = ({
         if (!deviceLat || !deviceLon) return;
 
         updateParams({
-          lat: convertToFixedFloat(deviceLat, 4),
-          lon: convertToFixedFloat(deviceLon, 4),
+          spatialArea: {
+            type: SpatialAreaType.COORDINATES,
+            value: {
+              lat: convertToFixedFloat(deviceLat, 4).toString(),
+              lng: convertToFixedFloat(deviceLon, 4).toString(),
+            },
+          },
         });
       } catch (error) {
         console.error(error);
@@ -131,14 +154,14 @@ export const useDataParams = () => {
   return context;
 };
 
-const checkDateFormat = (param: Partial<DataParams>, store?: string) => {
+const checkDateFormat = (param: Partial<DataParams>, state?: string) => {
   if (process.env.NODE_ENV !== "development") return;
 
   if (param.begin_time && !isValidUTC(param.begin_time)) {
-    console.error(`${store} has invalid date: ${param.begin_time}`);
+    console.error(`Invalid date: ${param.begin_time} in ${state}`);
   }
 
   if (param.end_time && !isValidUTC(param.end_time)) {
-    console.error(`${store} has invalid date: ${param.end_time}`);
+    console.error(`Invalid date: ${param.end_time} in ${state}`);
   }
 };

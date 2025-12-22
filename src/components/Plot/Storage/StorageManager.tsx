@@ -163,10 +163,10 @@ const StorageManager: React.FC<StorageManagerProps> = ({
         <StorageItem
           key={item.key}
           item={item}
-          onPlot={(newParams: DataParams) => {
-            onModalClose();
-            onPlot(newParams);
-          }}
+          // onPlot={(newParams: DataParams) => {
+          //   onModalClose();
+          //   onPlot(newParams);
+          // }}
           onDelete={() => {
             alertPresenter(
               "Delete item?",

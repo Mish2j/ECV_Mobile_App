@@ -8,29 +8,37 @@ type AllDateTypes = string | number | Date | Dayjs;
 const NO_MILLIS_UTC_STRING = "YYYY-MM-DDTHH:mm:ss[Z]";
 const UTC_STRING = "YYYY-MM-DDTHH:mm:ss.SSS[Z]";
 
-export function toLocalShortDateTime(str: string | number | Date): string {
-  return dayjs(str).format("YYYY-MM-DD HH:mm");
+export function toLocalShortDateTime(date: string | number | Date): string {
+  return dayjs(date).format("YYYY-MM-DD HH:mm");
 }
 
-export function toStartOfDay(str: string | number | Date): string {
-  return dayjs(str).startOf("day").format("YYYY-MM-DD[T]HH:mm:ss");
+export function toStartOfDay(date: string | number | Date): string {
+  return dayjs(date).startOf("day").format("YYYY-MM-DD[T]HH:mm:ss");
 }
 
-export function getDate(str: string | number | Date): string {
-  return dayjs(str).format("YYYY-MM-DD");
+export function getDate(date: string | number | Date): string {
+  return dayjs(date).format("YYYY-MM-DD");
 }
 
-export function getUTCStartOfDay(value: AllDateTypes): string {
-  return dayjs(value).utc().startOf("day").format(NO_MILLIS_UTC_STRING);
+export function getUTCStartOfDay(date: AllDateTypes): string {
+  return dayjs(date).utc().startOf("day").format(NO_MILLIS_UTC_STRING);
 }
 
-export function isValidUTC(value: string): boolean {
+/**
+ *
+ * @param date
+ * @returns boolean
+ *
+ *  @summary checks if datetime is in UTC format ("YYYY-MM-DDTHH:mm:ss[Z]" or "YYYY-MM-DDTHH:mm:ss.SSS[Z]")
+ *
+ */
+export function isValidUTC(date: string): boolean {
   const formats = [NO_MILLIS_UTC_STRING, UTC_STRING];
 
   for (const format of formats) {
-    if (dayjs.utc(value, format, true).isValid()) {
+    if (dayjs.utc(date, format, true).isValid()) {
       const regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/;
-      if (regex.test(value)) return true;
+      if (regex.test(date)) return true;
     }
   }
 

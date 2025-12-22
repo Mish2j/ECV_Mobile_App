@@ -54,7 +54,7 @@ const DataParamsWatcher: React.FC = () => {
 
   return (
     <IonToast
-      key={anchor()}
+      key={"tab-bar"}
       isOpen={!isEmpty(staged)}
       message={
         !isEmpty(metadata)
@@ -64,7 +64,7 @@ const DataParamsWatcher: React.FC = () => {
       color={"primary"}
       position={"bottom"}
       buttons={buttons}
-      positionAnchor={anchor()}
+      positionAnchor={"tab-bar"}
     />
   );
 };

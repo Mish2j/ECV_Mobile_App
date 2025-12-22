@@ -15,16 +15,20 @@ const MapResizer: React.FC = () => {
   const { params: ctxParams } = useDataParams();
   const map = useMap();
 
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      map.invalidateSize();
-    }, 250);
+  useEffect(
+    () => {
+      const timeoutId = setTimeout(() => {
+        map.invalidateSize();
+      }, 250);
 
-    map.setView([ctxParams.lat, ctxParams.lon], map.getZoom(), {
-      animate: true,
-    });
-    return () => clearTimeout(timeoutId);
-  }, [map, ctxParams.lat, ctxParams.lon]);
+      // map.setView([ctxParams.lat, ctxParams.lon], map.getZoom(), {
+      //   animate: true,
+      // });
+      return () => clearTimeout(timeoutId);
+    },
+    // [map, ctxParams.lat, ctxParams.lon]
+    [] // temp. dependency array to avoid errors
+  );
 
   return null;
 };

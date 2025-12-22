@@ -14,7 +14,11 @@ import { useLocation } from "react-router-dom";
 import dayjs from "dayjs";
 import { isEmpty } from "lodash";
 
-import { TimeSeriesDataRow, DataParams } from "../../types/time-series.types";
+import {
+  TimeSeriesDataRow,
+  DataParams,
+  SpatialAreaType,
+} from "../../types/time-series.types";
 import { TimeIntervalKey } from "../../constants/time-series";
 import { useDataParams } from "../../store/DataParamsContext";
 import { toLocalShortDateTime } from "../../utils/date";
@@ -33,7 +37,8 @@ import catalog from "./../Catalog/catalog.json";
 import TerraTimeSeries, {
   TerraTimeSeriesDataChangeEvent,
 } from "@nasa-terra/components/dist/react/time-series";
-// import TerraTimeAverageMap from "@nasa-terra/components/dist/react/time-average-map";
+import TerraTimeAverageMap from "@nasa-terra/components/dist/react/time-average-map";
+
 import Slider from "./Slider";
 import StorageManager from "./Storage/StorageManager";
 import Banner from "../UI/Banner";
@@ -80,13 +85,13 @@ const Plot: React.FC = () => {
 
       if (!coords) return;
 
-      updateParams({
-        lat: coords.lat,
-        lon: coords.lon,
-        begin_time: data.metadata.begin_time,
-        end_time: data.metadata.end_time,
-        variable: data.variableEntryId,
-      });
+      // updateParams({
+      //   lat: coords.lat,
+      //   lon: coords.lon,
+      //   begin_time: data.metadata.begin_time,
+      //   end_time: data.metadata.end_time,
+      //   variable: data.variableEntryId,
+      // });
     } catch (error) {
       console.error("ERROR: ", error);
     }
@@ -170,13 +175,13 @@ const Plot: React.FC = () => {
   };
 
   const plotCachedItemHandler = (newParams: DataParams) => {
-    updateParams({
-      lat: newParams.lat,
-      lon: newParams.lon,
-      begin_time: newParams.begin_time,
-      end_time: newParams.end_time,
-      variable: newParams.variable,
-    });
+    // updateParams({
+    //   lat: newParams.lat,
+    //   lon: newParams.lon,
+    //   begin_time: newParams.begin_time,
+    //   end_time: newParams.end_time,
+    //   variable: newParams.variable,
+    // });
   };
 
   // Emitted whenever time series data has been fetched from Giovanni. Or zoomed in/out.
@@ -188,6 +193,10 @@ const Plot: React.FC = () => {
   // Emitted whenever the date range is modified
   // const timeSeriesDateRangeChangeHandler = (e: CustomEvent) => {
   // };
+
+  const myfn = () => {
+    console.log("changed");
+  };
 
   return (
     <IonPage>
@@ -209,20 +218,35 @@ const Plot: React.FC = () => {
           />
           <IonGrid fixed>
             <IonRow>
-              {/* <IonCol size="12">
-                <TerraTimeAverageMap
-                  style={{
-                    height: "300px",
-                  }}
-                  collection="M2T1NXAER_5_12_4"
-                  variable="BCCMASS"
-                  start-date="01/01/2009"
-                  end-date="01/05/2009"
-                  location="62,5,95,40"
-                  bearer-token="YOUR_BEARER_TOKEN"
-                ></TerraTimeAverageMap>
-              </IonCol> */}
+              {ctxParams.spatialArea.type === SpatialAreaType.BOUNDING_BOX && (
+                <IonCol size="12">
+                  <TerraTimeAverageMap
+                    // style={{
+                    //   height: "300px",
+                    // }}
+
+                    collection="M2T1NXAER_5_12_4"
+                    variable="BCCMASS"
+                    // start-date="01/01/2009"
+                    // end-date="01/05/2009"
+                    start-date={ctxParams.begin_time.replace(
+                      /(\d{4})-(\d{2})-(\d{2}).*/,
+                      "$2/$3/$1"
+                    )}
+                    end-date={ctxParams.end_time.replace(
+                      /(\d{4})-(\d{2})-(\d{2}).*/,
+                      "$2/$3/$1"
+                    )}
+                    location={Object.values(ctxParams.spatialArea.value).join(
+                      ","
+                    )}
+                    bearer-token="YOUR_BEARER_TOKEN"
+                    terra-time-average-map-data-change={myfn}
+                  ></TerraTimeAverageMap>
+                </IonCol>
+              )}
               <IonCol size="12">
+                {/* bounding box in "west,south,east,north" format. */}
                 <TerraTimeSeries
                   // onTerraDateRangeChange={timeSeriesDateRangeChangeHandler}
                   onTerraTimeSeriesDataChange={timeSeriesDataChangeHandler}
@@ -235,7 +259,10 @@ const Plot: React.FC = () => {
                     /(\d{4})-(\d{2})-(\d{2}).*/,
                     "$2/$3/$1"
                   )}
-                  location={`${ctxParams.lat},${ctxParams.lon}`}
+                  // location={`${ctxParams.lat},${ctxParams.lon}`}
+                  location={Object.values(ctxParams.spatialArea.value).join(
+                    ","
+                  )}
                 ></TerraTimeSeries>
               </IonCol>
               <IonCol size="12">

@@ -72,33 +72,33 @@ const Plot: React.FC = () => {
     plottedProductDetails?.dataProductTimeInterval;
 
   // Plot latest cached data
-  useEffect(() => {
-    if (!isEmpty(metadata)) return;
+  // useEffect(() => {
+  //   if (!isEmpty(metadata)) return;
 
-    getLatestCached();
-  }, []);
+  //   getLatestCached();
+  // }, []);
 
-  const getLatestCached = async () => {
-    try {
-      const data = await getLatestCachedData(IndexedDbStores.TIME_SERIES);
+  // const getLatestCached = async () => {
+  //   try {
+  //     const data = await getLatestCachedData(IndexedDbStores.TIME_SERIES);
 
-      if (isEmpty(data)) return;
+  //     if (isEmpty(data)) return;
 
-      const coords = extractLatLonFromCacheKey(data.key);
+  //     const coords = extractLatLonFromCacheKey(data.key);
 
-      if (!coords) return;
+  //     if (!coords) return;
 
-      updateParams({
-        lat: coords.lat,
-        lon: coords.lon,
-        begin_time: data.metadata.begin_time,
-        end_time: data.metadata.end_time,
-        variable: data.variableEntryId,
-      });
-    } catch (error) {
-      console.error("ERROR: ", error);
-    }
-  };
+  //     updateParams({
+  //       lat: coords.lat,
+  //       lon: coords.lon,
+  //       begin_time: data.metadata.begin_time,
+  //       end_time: data.metadata.end_time,
+  //       variable: data.variableEntryId,
+  //     });
+  //   } catch (error) {
+  //     console.error("ERROR: ", error);
+  //   }
+  // };
 
   useEffect(() => {
     if (!plottedProductDetails) return;

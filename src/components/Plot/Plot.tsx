@@ -69,33 +69,33 @@ const Plot: React.FC = () => {
     productDetailsFromCatalog?.dataProductTimeInterval;
 
   // Plot latest cached data
-  useEffect(() => {
-    if (!isEmpty(metadata)) return;
+  // useEffect(() => {
+  //   if (!isEmpty(metadata)) return;
 
-    getLatestCached();
-  }, []);
+  //   getLatestCached();
+  // }, []);
 
-  const getLatestCached = async () => {
-    try {
-      const data = await getLatestCachedData(IndexedDbStores.TIME_SERIES);
+  // const getLatestCached = async () => {
+  //   try {
+  //     const data = await getLatestCachedData(IndexedDbStores.TIME_SERIES);
 
-      if (isEmpty(data)) return;
+  //     if (isEmpty(data)) return;
 
-      const coords = extractLatLonFromCacheKey(data.key);
+  //     const coords = extractLatLonFromCacheKey(data.key);
 
-      if (!coords) return;
+  //     if (!coords) return;
 
-      // updateParams({
-      //   lat: coords.lat,
-      //   lon: coords.lon,
-      //   begin_time: data.metadata.begin_time,
-      //   end_time: data.metadata.end_time,
-      //   variable: data.variableEntryId,
-      // });
-    } catch (error) {
-      console.error("ERROR: ", error);
-    }
-  };
+  //     // updateParams({
+  //     //   lat: coords.lat,
+  //     //   lon: coords.lon,
+  //     //   begin_time: data.metadata.begin_time,
+  //     //   end_time: data.metadata.end_time,
+  //     //   variable: data.variableEntryId,
+  //     // });
+  //   } catch (error) {
+  //     console.error("ERROR: ", error);
+  //   }
+  // };
 
   useEffect(() => {
     if (!productDetailsFromCatalog) return;
@@ -227,21 +227,10 @@ const Plot: React.FC = () => {
 
                     collection="M2T1NXAER_5_12_4"
                     variable="BCCMASS"
-                    // start-date="01/01/2009"
-                    // end-date="01/05/2009"
-                    start-date={ctxParams.begin_time.replace(
-                      /(\d{4})-(\d{2})-(\d{2}).*/,
-                      "$2/$3/$1"
-                    )}
-                    end-date={ctxParams.end_time.replace(
-                      /(\d{4})-(\d{2})-(\d{2}).*/,
-                      "$2/$3/$1"
-                    )}
-                    location={Object.values(ctxParams.spatialArea.value).join(
-                      ","
-                    )}
-                    bearer-token="YOUR_BEARER_TOKEN"
-                    terra-time-average-map-data-change={myfn}
+                    start-date="01/01/2009"
+                    end-date="01/05/2009"
+                    location="62,5,95,40"
+                    bearerToken=""
                   ></TerraTimeAverageMap>
                 </IonCol>
               )}

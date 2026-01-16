@@ -95,7 +95,8 @@ export const DataParamsProvider: React.FC<{ children: ReactNode }> = ({
         if (permissionError) return;
 
         if (!deviceLat || !deviceLon) return;
-
+        console.log(deviceLat);
+        console.log(deviceLon);
         updateParams({
           spatialArea: {
             type: SpatialAreaType.COORDINATES,

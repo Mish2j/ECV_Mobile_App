@@ -21,6 +21,7 @@ import TerraSpatialPicker from "@nasa-terra/components/dist/react/spatial-picker
 
 import "leaflet/dist/leaflet.css";
 import styles from "./Location.module.css";
+import { isEmpty } from "lodash";
 
 // Fix default marker icon issues
 // L.Icon.Default.mergeOptions({
@@ -31,10 +32,18 @@ import styles from "./Location.module.css";
 
 const Location: React.FC = () => {
   const mapRef = useRef<any>(null);
-  const { params: ctxParams, staged, requestUpdateParams } = useDataParams();
+  const {
+    params: ctxParams,
+    staged,
+    requestUpdateParams,
+    cancelRequest,
+  } = useDataParams();
   const history = useHistory();
   const location = useLocation();
   const [mapValue, setMapValue] = useState<any>({});
+
+  console.log(location);
+  console.log(location.search);
   // const handleLatChange = (e: CustomEvent) => {
   //   const newLat = e.detail.value; // get new latitude
   //   requestUpdateParams({ lat: convertToFixedFloat(newLat, 4) });
@@ -57,10 +66,14 @@ const Location: React.FC = () => {
       console.log("location change: ", e);
 
       if (e.detail.cause === "clear") {
+        console.log("CLEAR");
+        cancelRequest();
+        // TODO: set default map values
         return;
       }
       // point
       if (e.detail.latLng) {
+        console.log("This Happening!!!");
         const { lat, lng } = e.detail.latLng;
         requestUpdateParams({
           spatialArea: {
@@ -92,16 +105,28 @@ const Location: React.FC = () => {
     };
 
     el.addEventListener("terra-map-change", onValueChange as EventListener);
+    console.log(getMapValue());
+    return () => {
+      el.removeEventListener(
+        "terra-map-change",
+        onValueChange as EventListener
+      );
+    };
+  }, []);
 
-    // return () => {
-    //   el.removeEventListener(
-    //     "terra-map-change",
-    //     onValueChange as EventListener
-    //   );
-    // };
-  }, [history, location]);
+  useEffect(() => {
+    const queryString = window.location.search;
+    const params = new URLSearchParams(queryString);
+    console.log("params ", params.get("spatial"));
+    // setParamValue(params.get('myParam')); // Get the value of 'myParam'
+  }, [window.location.search]); // Run once on component mount
 
   const getMapValue = () => {
+    // if (!staged.spatialArea) {
+    //   console.log("canceled");
+    //   return;
+    // }
+
     if (staged.spatialArea) {
       return staged.spatialArea.type === SpatialAreaType.COORDINATES
         ? {
@@ -116,6 +141,8 @@ const Location: React.FC = () => {
           };
     }
 
+    // console.log(ctxParams.spatialArea);
+
     return ctxParams.spatialArea.type === SpatialAreaType.COORDINATES
       ? {
           lat: ctxParams.spatialArea.value.lat,
@@ -128,7 +155,18 @@ const Location: React.FC = () => {
           north: ctxParams.spatialArea.value.north,
         };
   };
-  // console.log(getMapValue());
+  // console.log(ctxParams.spatialArea.value);
+
+  const initialValue =
+    ctxParams.spatialArea.type === SpatialAreaType.COORDINATES
+      ? `${ctxParams.spatialArea.value.lat}, ${ctxParams.spatialArea.value.lng}`
+      : `${ctxParams.spatialArea.value.west},
+          ${ctxParams.spatialArea.value.south},
+          ${ctxParams.spatialArea.value.east},
+          ${ctxParams.spatialArea.value.north}`;
+
+  // console.log(initialValue);
+
   return (
     <IonPage>
       <Banner />
@@ -157,6 +195,7 @@ const Location: React.FC = () => {
             // hasShapeSelector
             // hasCoordTracker
             mapValue={getMapValue()}
+            initialValue={initialValue}
             inline
           ></TerraSpatialPicker>
         </div>

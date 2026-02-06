@@ -23,8 +23,8 @@
 
 .map-container terra-spatial-picker {
   width: 100%;
-  max-width: 800px;
-  padding: 5px;
+  max-width: 100%;
+  /* padding: 5px; */
 }
 
 /* WORKS */
@@ -32,5 +32,18 @@ terra-spatial-picker::part(map) {
   border: none;
   aspect-ratio: auto;
   height: 70vh;
+
+  padding: 0;
   /* border: 10px solid red; */
+
+  /* hide terra-map padding */
+  margin: -16px;
+}
+
+/* EXPORT PARTS: map, leaflet-bbox, leaflet-point, leaflet-edit, leaflet-remove */
+terra-spatial-picker::part(leaflet-remove) {
+  display: none;
+}
+terra-spatial-picker::part(leaflet-edit) {
+  display: none;
 }

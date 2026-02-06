@@ -109,9 +109,21 @@ const Location: React.FC = () => {
     return () => {
       el.removeEventListener(
         "terra-map-change",
-        onValueChange as EventListener
+        onValueChange as EventListener,
       );
     };
+  }, []);
+
+  useEffect(() => {
+    const el = mapRef.current;
+    if (!el) return;
+
+    // Wait for Lit element to finish rendering
+    el.updateComplete.then(() => {
+      console.log("Lit component finished rendering");
+      // Safe to access properties, shadow DOM, methods, etc.
+      console.log(mapRef);
+    });
   }, []);
 
   useEffect(() => {
@@ -167,6 +179,10 @@ const Location: React.FC = () => {
 
   // console.log(initialValue);
 
+  const changeHandler = () => {
+    console.log("change detected");
+  };
+
   return (
     <IonPage>
       <Banner />
@@ -191,12 +207,17 @@ const Location: React.FC = () => {
         <div className={styles["map-container"]}>
           <TerraSpatialPicker
             ref={mapRef}
+            // hasNavigation=false produces error
             // hasNavigation
-            // hasShapeSelector
-            // hasCoordTracker
+            // hasShapeSelector={true}
+            hasCoordTracker={false}
+            hideLabel
+            // label="Picker"
             mapValue={getMapValue()}
             initialValue={initialValue}
             inline
+            // onChange={changeHandler}
+            // updateComplete={changeHandler}
           ></TerraSpatialPicker>
         </div>
       </IonContent>

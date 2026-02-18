@@ -4,8 +4,8 @@ import React, {
   useState,
   ReactNode,
   useEffect,
+  useCallback,
 } from "react";
-
 import {
   DataParams,
   SpatialAreaType,
@@ -23,8 +23,10 @@ interface DataParamsContextType {
   setMetadata: (metadata: TimeSeriesMetadata) => void;
   updateParams: (newParams: Partial<DataParams>) => void;
   requestUpdateParams: (newParams: Partial<DataParams>) => void;
-  cancelRequest: () => void;
+  cancelRequest: (callback?: OptionalCallback) => void;
 }
+
+export type OptionalCallback = () => void;
 
 const initialContextValue: DataParamsContextType = {
   params: {
@@ -126,9 +128,10 @@ export const DataParamsProvider: React.FC<{ children: ReactNode }> = ({
     setStaged((prev) => ({ ...prev, ...newParams }));
   };
 
-  const cancelRequest = () => {
+  const cancelRequest = useCallback((callback?: OptionalCallback) => {
     setStaged({});
-  };
+    callback?.();
+  }, []);
 
   const contextValue: DataParamsContextType = {
     params,

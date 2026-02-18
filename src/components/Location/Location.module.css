@@ -41,9 +41,9 @@ terra-spatial-picker::part(map) {
 }
 
 /* EXPORT PARTS: map, leaflet-bbox, leaflet-point, leaflet-edit, leaflet-remove */
-terra-spatial-picker::part(leaflet-remove) {
+/* terra-spatial-picker::part(leaflet-remove) {
   display: none;
 }
 terra-spatial-picker::part(leaflet-edit) {
   display: none;
-}
+} */

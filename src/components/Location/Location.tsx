@@ -24,6 +24,8 @@ import CoordinateInput from "./CoordinateInput";
 import TerraSpatialPicker from "@nasa-terra/components/dist/react/spatial-picker";
 import TerraMap from "@nasa-terra/components/dist/react/map";
 
+import TerraInput from "@nasa-terra/components/dist/react/input";
+
 import "leaflet/dist/leaflet.css";
 import styles from "./Location.module.css";
 
@@ -115,7 +117,7 @@ const Location: React.FC = () => {
     return () => {
       el.removeEventListener(
         "terra-map-change",
-        onValueChange as EventListener,
+        onValueChange as EventListener
       );
     };
   }, []);
@@ -207,6 +209,14 @@ const Location: React.FC = () => {
         onLatChange={handleLatChange}
         onLngChange={handleLngChange}
       /> */}
+      <TerraInput
+        label="Phone"
+        // type="tel"
+        pattern="/^-?(90(\.0+)?|[1-8]?\d(\.\d+)?),\s*-?(180(\.0+)?|(1[0-7]\d|[1-9]?\d)(\.\d+)?)$/"
+
+        // placeholder="555-123-4567"
+        // helpText="Format: 555-123-4567"
+      ></TerraInput>
     </IonPage>
   );
 };
@@ -247,7 +257,7 @@ export function getSpatialAreaFromUrl(urlString: string): SpatialArea | null {
 const getMapValue = (
   stagedParams: Partial<DataParams>,
   currentParams: DataParams,
-  mapRef: any,
+  mapRef: any
 ) => {
   // if (cause === "cancel") {
   //   console.log("canceled");

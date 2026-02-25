@@ -24,8 +24,6 @@ import CoordinateInput from "./CoordinateInput";
 import TerraSpatialPicker from "@nasa-terra/components/dist/react/spatial-picker";
 import TerraMap from "@nasa-terra/components/dist/react/map";
 
-import TerraInput from "@nasa-terra/components/dist/react/input";
-
 import "leaflet/dist/leaflet.css";
 import styles from "./Location.module.css";
 
@@ -179,7 +177,7 @@ const Location: React.FC = () => {
       </IonContent> */}
       <IonContent scrollY={false} fullscreen={false}>
         <div className={styles["map-container"]}>
-          {/* <TerraSpatialPicker
+          <TerraSpatialPicker
             ref={mapRef}
             // hasNavigation=false produces error
             // hasNavigation
@@ -193,14 +191,14 @@ const Location: React.FC = () => {
             inline
             // onChange={changeHandler}
             // updateComplete={changeHandler}
-          ></TerraSpatialPicker> */}
-          <TerraMap
+          ></TerraSpatialPicker>
+          {/* <TerraMap
             ref={mapRef}
             style={{ width: "500px", height: "500px" }}
             hasShapeSelector={true}
             hasNavigation
             value={getMapValue(staged, ctxParams, mapRef)}
-          />
+          /> */}
         </div>
       </IonContent>
       {/* <CoordinateInput
@@ -209,14 +207,14 @@ const Location: React.FC = () => {
         onLatChange={handleLatChange}
         onLngChange={handleLngChange}
       /> */}
-      <TerraInput
+      {/* <TerraInput
         label="Phone"
         // type="tel"
         pattern="/^-?(90(\.0+)?|[1-8]?\d(\.\d+)?),\s*-?(180(\.0+)?|(1[0-7]\d|[1-9]?\d)(\.\d+)?)$/"
 
         // placeholder="555-123-4567"
         // helpText="Format: 555-123-4567"
-      ></TerraInput>
+      ></TerraInput> */}
     </IonPage>
   );
 };
@@ -279,13 +277,13 @@ const getMapValue = (
   }
 
   // console.log(ctxParams.spatialArea);
-  if (mapRef.current) {
-    console.log(mapRef.current.geoJsonRepository);
-    console.log(mapRef.current.map.geoJsonRepository);
-    console.log(mapRef.current.cancelDraw);
-    console.log(mapRef.current._handlers);
-    console.log(mapRef.current.drawHandler);
-  }
+  // if (mapRef.current) {
+  //   console.log(mapRef.current.geoJsonRepository);
+  //   console.log(mapRef.current.map.geoJsonRepository);
+  //   console.log(mapRef.current.cancelDraw);
+  //   console.log(mapRef.current._handlers);
+  //   console.log(mapRef.current.drawHandler);
+  // }
 
   return currentParams.spatialArea.type === SpatialAreaType.COORDINATES
     ? {

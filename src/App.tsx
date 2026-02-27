@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { IonApp, setupIonicReact } from "@ionic/react";
 
 import { DataParamsProvider } from "./store/DataParamsContext";
 import { useCatalogQuery } from "./data/useCatalogQuery";
 
 import TabBar from "./navigation/TabMenu";
+import SplashScreen from "./components/UI/SplashScreen";
 
 /* Core CSS required for Ionic components to work properly */
 import "@ionic/react/css/core.css";
@@ -37,12 +38,16 @@ setupIonicReact();
 
 const App: React.FC = () => {
   useCatalogQuery();
+  const [splashDone, setSplashDone] = useState(false);
 
   return (
     <IonApp>
-      <DataParamsProvider>
-        <TabBar />
-      </DataParamsProvider>
+      {!splashDone && <SplashScreen onFinish={() => setSplashDone(true)} />}
+      {splashDone && (
+        <DataParamsProvider>
+          <TabBar />
+        </DataParamsProvider>
+      )}
     </IonApp>
   );
 };

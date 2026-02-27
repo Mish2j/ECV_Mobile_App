@@ -1,0 +1,29 @@
+.splash-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #0c4b8e;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  /* opacity: 0, important for enter animation */
+}
+
+.splash-logo {
+  /* max-width: 100%; */
+  width: 90%;
+  height: auto;
+  margin-bottom: 16px;
+  /* animation: fadeIn 1s ease-in-out; */
+}
+
+.splash-text {
+  font-size: 16px;
+  color: #c1c1c1;
+  font-style: italic;
+  /* animation: fadeIn 1.5s ease-in-out; */
+}

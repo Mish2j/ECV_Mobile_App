@@ -3,13 +3,24 @@ import React, {
   useContext,
   useState,
   ReactNode,
+  useRef,
+  useCallback,
   useEffect,
 } from "react";
-import { DataParams, TimeSeriesMetadata } from "../types/time-series.types";
+import {
+  DataParams,
+  TimeSeriesMetadata,
+  SpatialAreaType,
+} from "../types/time-series.types";
 import { DefaultParams } from "../constants/time-series";
-import { convertToFixedFloat } from "../utils/converter";
 import { isValidUTC } from "../utils/date";
-import useDeviceLocation from "../hooks/useDeviceLocation";
+// import { useSettings } from "./SettingsContext";
+
+export enum ActionType {
+  CANCEL = "cancel",
+  CONFIRM = "confirm",
+  STAGED = "staged",
+}
 
 interface DataParamsContextType {
   params: DataParams;
@@ -19,6 +30,7 @@ interface DataParamsContextType {
   updateParams: (newParams: Partial<DataParams>) => void;
   requestUpdateParams: (newParams: Partial<DataParams>) => void;
   cancelRequest: () => void;
+  subscribeToAction: (cb: (action: ActionType) => void) => () => void;
 }
 
 const initialContextValue: DataParamsContextType = {
@@ -26,8 +38,13 @@ const initialContextValue: DataParamsContextType = {
     variable: "",
     begin_time: DefaultParams.BEGIN_TIME,
     end_time: DefaultParams.END_TIME,
-    lat: DefaultParams.LATITUDE,
-    lon: DefaultParams.LONGITUDE,
+    spatialArea: {
+      type: SpatialAreaType.COORDINATES,
+      value: {
+        lat: DefaultParams.LATITUDE,
+        lng: DefaultParams.LONGITUDE,
+      },
+    },
   },
   staged: {},
   metadata: {},
@@ -43,6 +60,9 @@ const initialContextValue: DataParamsContextType = {
   cancelRequest: () => {
     console.log("empty function!");
   },
+  subscribeToAction: (cb: (action: ActionType) => void) => () => {
+    console.log("empty function!");
+  },
 };
 
 const DataParamsContext =
@@ -51,59 +71,99 @@ const DataParamsContext =
 export const DataParamsProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const {
-    latitude: deviceLat,
-    longitude: deviceLon,
-    error: permissionError,
-    getLocation,
-  } = useDeviceLocation();
   const [params, setParams] = useState<DataParams>({
     variable: "",
     begin_time: DefaultParams.BEGIN_TIME,
     end_time: DefaultParams.END_TIME,
-    lat: DefaultParams.LATITUDE,
-    lon: DefaultParams.LONGITUDE,
+    spatialArea: {
+      type: SpatialAreaType.COORDINATES,
+      value: {
+        lat: DefaultParams.LATITUDE,
+        lng: DefaultParams.LONGITUDE,
+      },
+    },
   });
   const [staged, setStaged] = useState<Partial<DataParams>>({});
   const [metadata, setMetadata] = useState<Partial<TimeSeriesMetadata>>({});
+  // const { settings } = useSettings();
 
-  // Get device's location
-  useEffect(() => {
-    const getDeviceLocation = async () => {
-      try {
-        await getLocation();
+  // FIXME: Disable device location for now until we can figure out why it's not working reliably. Using default coordiantes for now. Read more in SettingsContext.tsx.
+  // useEffect(() => {
+  //   const { lat: deviceLat, lng: deviceLon } = settings.device.location;
 
-        if (permissionError) return;
+  //   if (!deviceLat || !deviceLon) return;
+  //   if (deviceLat && deviceLon) {
+  //     setParams((prev) => ({
+  //       ...prev,
+  //       spatialArea: {
+  //         type: SpatialAreaType.COORDINATES,
+  //         value: {
+  //           lat: deviceLat,
+  //           lng: deviceLon,
+  //         },
+  //       },
+  //     }));
+  //   }
+  // }, [settings.device.location]);
 
-        if (!deviceLat || !deviceLon) return;
+  /**
+   *
+   * Set of all listeners for action events
+   *
+   * We intentionally DO NOT store user actions (cancel/confirm/etc)
+   * in React state.
+   *
+   * Why?
+   * ----
+   * React state represents CURRENT state.
+   * But button clicks are EVENTS — things that happen once in time.
+   *
+   */
+  const actionListeners = useRef<Set<(action: ActionType) => void>>(new Set());
 
-        updateParams({
-          lat: convertToFixedFloat(deviceLat, 4),
-          lon: convertToFixedFloat(deviceLon, 4),
-        });
-      } catch (error) {
-        console.error(error);
-      }
-    };
-    getDeviceLocation();
-  }, [getLocation, deviceLat, deviceLon]);
+  /**
+   *
+   * Emit an action event to all current subscribers.
+   *
+   */
+  const emitAction = useCallback((action: ActionType) => {
+    Array.from(actionListeners.current).forEach((cb) => cb(action));
+  }, []);
 
   // immediate update
   const updateParams = (newParams: Partial<DataParams>) => {
     checkDateFormat(newParams, "params");
     setParams((prev) => ({ ...prev, ...newParams }));
     setStaged({});
+    emitAction(ActionType.CONFIRM);
   };
 
   // request confirmation before updating
   const requestUpdateParams = (newParams: Partial<DataParams>) => {
     checkDateFormat(newParams, "staged");
     setStaged((prev) => ({ ...prev, ...newParams }));
+    emitAction(ActionType.STAGED);
   };
 
   const cancelRequest = () => {
     setStaged({});
+    emitAction(ActionType.CANCEL);
   };
+
+  /**
+   *
+   * Subscribe to action events.
+   * Returns an unsubscribe function for cleanup.
+   * Use this only inside "useActionListener".
+   *
+   */
+  const subscribeToAction = useCallback((cb: (action: ActionType) => void) => {
+    actionListeners.current.add(cb);
+
+    return () => {
+      actionListeners.current.delete(cb);
+    };
+  }, []);
 
   const contextValue: DataParamsContextType = {
     params,
@@ -113,6 +173,7 @@ export const DataParamsProvider: React.FC<{ children: ReactNode }> = ({
     updateParams,
     requestUpdateParams,
     cancelRequest,
+    subscribeToAction,
   };
 
   return (

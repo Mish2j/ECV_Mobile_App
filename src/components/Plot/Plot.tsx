@@ -14,14 +14,19 @@ import { useLocation } from "react-router-dom";
 import dayjs from "dayjs";
 import { isEmpty } from "lodash";
 
-import { TimeSeriesDataRow, DataParams } from "../../types/time-series.types";
-import { TimeIntervalKey } from "../../constants/time-series";
+import {
+  TimeSeriesDataRow,
+  DataParams,
+  SpatialAreaType,
+} from "../../types/time-series.types";
+import { DefaultParams, TimeIntervalKey } from "../../constants/time-series";
 import { useDataParams } from "../../store/DataParamsContext";
+// import { useSettings } from "../../store/SettingsContext";
 import { toLocalShortDateTime } from "../../utils/date";
 import {
   getMiddleIndex,
   convertTimeInterval,
-  getDefaultDateRange,
+  getDefaultDateRangeForTimeInterval,
   extractLatLonFromCacheKey,
 } from "./helpers";
 import useProductDetails, {
@@ -31,6 +36,7 @@ import {
   getLatestCachedData,
   IndexedDbStores,
 } from "../../services/indexDBService";
+import { useAuth } from "../../store/AuthContext";
 
 import TerraTimeSeries, {
   TerraTimeSeriesDataChangeEvent,
@@ -39,8 +45,10 @@ import Slider from "./Slider";
 import StorageManager from "./Storage/StorageManager";
 import Banner from "../UI/Banner";
 import TimeInterval from "./TimeInterval";
+import OLMap from "./OLMap/OLMap";
 
 import "./Plot.css";
+import OLMap from "./OLMap/OLMap";
 
 const Plot: React.FC = () => {
   const [stateData, setStateData] = useState<TimeSeriesDataRow[]>([]);
@@ -54,24 +62,26 @@ const Plot: React.FC = () => {
     setMetadata,
     metadata,
   } = useDataParams();
+  const { token } = useAuth();
+  // const { settings } = useSettings();
 
   const location = useLocation();
   const catalogPageVariable = location.state;
 
   // Get details of the variable selected by the user on the catalog page.
   const selectedProductDetails: SelectedProductDetailsType = useProductDetails(
-    catalogPageVariable as string,
+    catalogPageVariable as string
   );
 
   // Get details of currently plotted variable
   const plottedProductDetails: SelectedProductDetailsType = useProductDetails(
-    ctxParams.variable,
+    ctxParams.variable
   );
 
   const currentProductTimeInterval =
     plottedProductDetails?.dataProductTimeInterval;
 
-  // FIXME: SEEMS LIKE THIS IS CAUSING A WEIRD BUG...THAT PREVENTS TIME-SERIES COMPONENT FROM PLOTTING
+  // FIXME: Figure out why this is causing a weird bug that prevents time-series component from plotting
   // Plot latest cached data
   // useEffect(() => {
   //   if (!isEmpty(metadata)) return;
@@ -85,6 +95,7 @@ const Plot: React.FC = () => {
 
   //     if (isEmpty(data)) return;
 
+  // TODO: WILL NOT WORK IN CASE OF BBOX.
   //     const coords = extractLatLonFromCacheKey(data.key);
 
   //     if (!coords) return;
@@ -104,7 +115,7 @@ const Plot: React.FC = () => {
   useEffect(() => {
     if (!plottedProductDetails) return;
     setSelectedTimeInterval(
-      plottedProductDetails?.dataProductTimeInterval as TimeIntervalKey,
+      plottedProductDetails?.dataProductTimeInterval as TimeIntervalKey
     );
   }, [plottedProductDetails]);
 
@@ -121,18 +132,29 @@ const Plot: React.FC = () => {
   useEffect(() => {
     if (!catalogPageVariable) return;
 
+    // const { lat: deviceLat, lng: deviceLon } = settings.device.location;
+
     const { startDate: defaultStartDate, endDate: defaultEndDate } =
-      getDefaultDateRange(
+      getDefaultDateRangeForTimeInterval(
         dayjs(selectedProductDetails?.dataProductBeginDateTime),
         dayjs(selectedProductDetails?.dataProductEndDateTime),
-        selectedProductDetails?.dataProductTimeInterval as TimeIntervalKey,
+        selectedProductDetails?.dataProductTimeInterval as TimeIntervalKey
       );
 
+    // user's device location is currently disabled until we can figure out why it's not working reliably. Using default coordinates for now. Read more in SettingsContext.tsx.
     updateParams({
       begin_time: defaultStartDate,
       end_time: defaultEndDate,
-      // begin_time: "2019-10-01T00:00:00Z",
-      // end_time: "2019-12-01T00:00:00Z",
+      spatialArea: {
+        type: SpatialAreaType.COORDINATES,
+        value: {
+          // lat: deviceLat || DefaultParams.LATITUDE,
+          // lng: deviceLon || DefaultParams.LONGITUDE,
+          lat: DefaultParams.LATITUDE,
+          lng: DefaultParams.LONGITUDE,
+        },
+      },
+
       variable: catalogPageVariable as string,
     });
   }, [catalogPageVariable]);
@@ -143,7 +165,6 @@ const Plot: React.FC = () => {
     setSliderValue(activeIndex);
   };
 
-  /* FIXME: Slider buttons don't work when plot fully zoomed in -- check stateData */
   const sliderLeftBtnHandler = () => {
     if (stateData.length === 0) return;
     if (sliderValue === 0) return;
@@ -154,9 +175,9 @@ const Plot: React.FC = () => {
         prevNum -
           convertTimeInterval(
             currentProductTimeInterval as TimeIntervalKey,
-            selectedTimeInterval,
-          ),
-      ),
+            selectedTimeInterval
+          )
+      )
     );
   };
 
@@ -170,20 +191,14 @@ const Plot: React.FC = () => {
         prevNum +
           convertTimeInterval(
             currentProductTimeInterval as TimeIntervalKey,
-            selectedTimeInterval,
-          ),
-      ),
+            selectedTimeInterval
+          )
+      )
     );
   };
 
   const plotCachedItemHandler = (newParams: DataParams) => {
-    updateParams({
-      lat: newParams.lat,
-      lon: newParams.lon,
-      begin_time: newParams.begin_time,
-      end_time: newParams.end_time,
-      variable: newParams.variable,
-    });
+    updateParams(newParams);
   };
 
   // Emitted whenever time series data has been fetched from Giovanni. Or zoomed in/out.
@@ -212,43 +227,55 @@ const Plot: React.FC = () => {
           />
           <IonGrid>
             <IonRow>
+              {ctxParams.spatialArea.type === SpatialAreaType.BOUNDING_BOX && (
+                <IonCol size="12">
+                  <OLMap date={stateData[sliderValue]?.timestamp} />
+                </IonCol>
+              )}
               <IonCol size="12">
                 <TerraTimeSeries
+                  // productLabel={plottedProductDetails.label}
+                  // mobileView
                   onTerraTimeSeriesDataChange={timeSeriesDataChangeHandler}
                   variableEntryId={ctxParams.variable}
                   start-date={ctxParams.begin_time.replace(
                     /(\d{4})-(\d{2})-(\d{2}).*/,
-                    "$2/$3/$1",
+                    "$2/$3/$1"
                   )}
                   end-date={ctxParams.end_time.replace(
                     /(\d{4})-(\d{2})-(\d{2}).*/,
-                    "$2/$3/$1",
+                    "$2/$3/$1"
                   )}
-                  location={`${ctxParams.lat},${ctxParams.lon}`}
+                  location={Object.values(ctxParams.spatialArea.value).join(
+                    ","
+                  )}
+                  bearerToken={token || ""}
                 ></TerraTimeSeries>
               </IonCol>
-              <IonCol size="12">
-                <Slider
-                  onLeftBtnClick={sliderLeftBtnHandler}
-                  onRightBtnClick={sliderRightBtnHandler}
-                  value={sliderValue}
-                  max={stateData.length - 1}
-                  min={0}
-                  onValueChange={sliderValueChangeHandler}
-                  pinFormatter={(index: number) =>
-                    stateData[index]?.timestamp
-                      ? `${toLocalShortDateTime(stateData[index].timestamp)}, ${
-                          stateData[index].value
-                        }`
-                      : ""
-                  }
-                  disabled={isEmpty(metadata) && stateData.length === 0}
-                  startDate={toLocalShortDateTime(stateData[0]?.timestamp)}
-                  endDate={toLocalShortDateTime(
-                    stateData[stateData.length - 1]?.timestamp,
-                  )}
-                />
-              </IonCol>
+              {!isEmpty(metadata) && stateData.length !== 0 && (
+                <IonCol size="12">
+                  <Slider
+                    onLeftBtnClick={sliderLeftBtnHandler}
+                    onRightBtnClick={sliderRightBtnHandler}
+                    value={sliderValue}
+                    max={stateData.length - 1}
+                    min={0}
+                    onValueChange={sliderValueChangeHandler}
+                    pinFormatter={(index: number) =>
+                      stateData[index]?.timestamp
+                        ? `${toLocalShortDateTime(stateData[index].timestamp)}, ${
+                            stateData[index].value
+                          }`
+                        : ""
+                    }
+                    disabled={isEmpty(metadata) && stateData.length === 0}
+                    startDate={toLocalShortDateTime(stateData[0]?.timestamp)}
+                    endDate={toLocalShortDateTime(
+                      stateData[stateData.length - 1]?.timestamp
+                    )}
+                  />
+                </IonCol>
+              )}
               {!isEmpty(metadata) && stateData.length !== 0 && (
                 <TimeInterval
                   onIntervalChange={(intervalOption) =>

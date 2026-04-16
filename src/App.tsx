@@ -2,6 +2,8 @@ import React from "react";
 import { IonApp, setupIonicReact } from "@ionic/react";
 
 import { DataParamsProvider } from "./store/DataParamsContext";
+import { AuthProvider } from "./store/AuthContext";
+// import { SettingsProvider } from "./store/SettingsContext";
 import { useCatalogQuery } from "./data/useCatalogQuery";
 
 import TabBar from "./navigation/TabMenu";
@@ -31,18 +33,23 @@ import "@nasa-terra/components/dist/themes/horizon.css";
 
 import { setBasePath } from "@nasa-terra/components/dist/utilities/base-path";
 
-setBasePath("https://cdn.jsdelivr.net/npm/@nasa-terra/components@0.0.105/cdn/");
+setBasePath("https://cdn.jsdelivr.net/npm/@nasa-terra/components@0.0.162/cdn/");
 
 setupIonicReact();
 
 const App: React.FC = () => {
   useCatalogQuery();
 
+  // TODO: Commenting out SettingsProvider for now since it's not fully implemented. We can re-enable it once we have the location functionality working smoothly.
   return (
     <IonApp>
-      <DataParamsProvider>
-        <TabBar />
-      </DataParamsProvider>
+      <AuthProvider>
+        {/* <SettingsProvider> */}
+        <DataParamsProvider>
+          <TabBar />
+        </DataParamsProvider>
+        {/* </SettingsProvider> */}
+      </AuthProvider>
     </IonApp>
   );
 };

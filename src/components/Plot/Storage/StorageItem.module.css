@@ -1,0 +1,15 @@
+h2.item-label {
+  font-weight: bold;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.button-group {
+  display: flex;
+}
+
+ion-button.button {
+  flex: 1;
+}

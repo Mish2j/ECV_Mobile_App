@@ -1,37 +1,108 @@
-import localforage from 'localforage';
+import { IDBPDatabase, openDB } from "idb";
+import { VariableDbEntry } from "../types/time-series.types";
 
-localforage.config({
-  driver: localforage.INDEXEDDB, // Force IndexedDB; same as using setDriver()
-  name: 'myApp',
-  version: 1.0,
-  storeName: 'keyvaluepairs', // Should be alphanumeric, with underscores.
-  description: 'some description'
-});
+/**
+ *
+ * The code below was copied from terra library:
+ * https://github.com/nasa/terra-ui-components/blob/1ce1817676c1560b56147aa44fbced902ff7269e/src/internal/indexeddb.ts
+ *
+ *
+ * ================ BEGIN COPIED CODE ================
+ *
+ */
 
-export const clearOldCache = async () => {
+export const DB_NAME = "terra";
+
+export enum IndexedDbStores {
+  TIME_SERIES = "time-series",
+  TIME_AVERAGE_MAP = "time-average-map",
+}
+
+/**
+ * a helper for wrapping code that depends on an active database connection
+ * this function will open the database, run the callback, and then cleanly close the database
+ */
+export async function withDb<T>(callback: (db: IDBPDatabase) => Promise<T>) {
+  const db = await getDb();
+
   try {
-    await localforage.clear();
-    console.log('Old cache cleared');
-  } catch (err) {
-    console.error('Error clearing old cache:', err);
+    return await callback(db);
+  } finally {
+    await db.close();
   }
-};
+}
 
-export const setItem = async (key: string, value: any) => {
-  try {
-    await localforage.setItem(key, value);
-    console.log(`Data with key "${key}" has been set in IndexedDB`);
-  } catch (err) {
-    console.error('Error setting data in IndexedDB:', err);
-  }
-};
+export function getDataByKey<T>(
+  store: IndexedDbStores,
+  key: string
+): Promise<T> {
+  return withDb(async (db) => {
+    return await db.get(store, key);
+  });
+}
 
-export const getItem = async (key: string): Promise<any> => {
+export function deleteDataByKey(store: IndexedDbStores, key: string) {
+  return withDb(async (db) => {
+    await db.delete(store, key);
+  });
+}
+
+// ================ END COPIED CODE ================
+
+/**
+ *
+ * @returns database found in the IndexedDB
+ *
+ */
+export async function getDb(): Promise<IDBPDatabase> {
   try {
-    const value = await localforage.getItem(key);
-    console.log(`Data with key "${key}" has been retrieved from IndexedDB`);
-    return value;
-  } catch (err) {
-    console.error('Error getting data from IndexedDB:', err);
+    const db = await openDB(DB_NAME);
+    return db;
+  } catch (error) {
+    console.error("Error opening DB:", error);
+    throw error;
   }
-};
+}
+
+export async function getAllData(
+  store: IndexedDbStores
+): Promise<Partial<VariableDbEntry>[]> {
+  return withDb(async (db) => {
+    try {
+      if (!db.objectStoreNames.contains(store)) return [];
+
+      const items = await db.getAll(store);
+
+      return items.map((item) => ({
+        cachedAt: item.cachedAt,
+        startDate: item.startDate,
+        endDate: item.endDate,
+        metadata: item.metadata,
+        variableEntryId: item.variableEntryId,
+        key: item.key,
+      }));
+    } catch (error) {
+      console.error("Error from getAllData: ", error);
+      throw error;
+    }
+  });
+}
+
+export async function deleteAllData(store: IndexedDbStores) {
+  return withDb(async (db) => {
+    if (!db.objectStoreNames.contains(store)) return;
+    await db.clear(store);
+  });
+}
+
+export async function getLatestCachedData(
+  store: IndexedDbStores
+): Promise<VariableDbEntry> {
+  return withDb(async (db) => {
+    if (!db.objectStoreNames.contains(store)) return {};
+
+    const items = await db.getAll(store);
+
+    return items.sort((a, b) => b.cachedAt - a.cachedAt)[0];
+  });
+}
